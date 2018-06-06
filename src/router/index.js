@@ -23,6 +23,7 @@ import Toast from '@/components/Toast'
 import Stepper from '@/components/Stepper'
 import Tabs from '@/components/Tabs'
 import Pull from '@/components/Pull'
+import FileUpload from '@/components/FileUpload'
 import axiosM from '@/components/axiosM'
 
 Vue.use(Router)
@@ -143,6 +144,11 @@ export default new Router({
       path: '/pull',
       name: 'Pull',
       component: Pull
+    },
+    {
+      path: '/fileUpload',
+      name: 'FileUpload',
+      component: FileUpload
     },
     {
       path: '/axiosM',
