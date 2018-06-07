@@ -1,13 +1,22 @@
 <template>
   <div class="hy-upload">
-    <input
-      ref="input"
-      type="file"
-      accept="image/*"
-      class="upload-input"
-      :disabled="disabled"
-      @change="onChange"
-    >
+    <span class="upload-title">图片</span>
+    <div class="upload-icon">
+      <input
+        ref="input"
+        type="file"
+        accept="image/*"
+        class="upload-input"
+        :disabled="disabled"
+        @change="onChange"
+      >
+    </div>
+    <div class="pic-list" v-if="waitList.length > 0">
+      <div
+        class="wait-pic"
+        v-for="pic in waitList"
+        :style="{backgroundImage: `url(${pic.url})`}"></div>
+    </div>
   </div>
 </template>
 
@@ -27,6 +36,11 @@ export default {
     maxSize: {
       type: Number,
       default: Number.MAX_VALUE
+    }
+  },
+  data () {
+    return {
+      waitList: []
     }
   },
   methods: {
@@ -101,6 +115,7 @@ export default {
       if (doUpload !== false) {
         // 开始向后台上传图片
         this.handleFile(file)
+        this.waitList.push({ url: file.content })
       }
     },
     handleFile (file) {
@@ -132,11 +147,50 @@ export default {
 
 <style scoped>
 .hy-upload{
-  width: 50px;
+  padding: 10px;
+  text-align: left;
+}
+.upload-icon{
+  width: 20px;
+  height: 20px;
   overflow: hidden;
-  background-color: red;
+  float: right;
+  border: 1px solid rgba(100,100,100,0.5);
+  position: relative;
+}
+.upload-icon::before{
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: 1px;
+  background-color: rgba(100,100,100,0.4);
+}
+.upload-icon::after{
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  background-color: rgba(100,100,100,0.4);
 }
 .upload-input{
   opacity: 0;
+}
+.pic-list{
+  height: 60px;
+  overflow: auto;
+  border: 1px solid rgba(100,100,100,0.3);
+}
+.wait-pic{
+  height: 100%;
+  width: 60px;
+  margin-right: 1%;
+  float: left;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 </style>
