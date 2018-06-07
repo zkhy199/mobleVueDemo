@@ -139,6 +139,11 @@
           <mu-list-item-title>axios请求</mu-list-item-title>
         </mu-list-item-content>
       </mu-list-item>
+      <mu-list-item avatar :ripple="true" button to="/fileUpload">
+        <mu-list-item-content>
+          <mu-list-item-title>图片上传</mu-list-item-title>
+        </mu-list-item-content>
+      </mu-list-item>
       <mu-divider></mu-divider>
     </mu-list>
   </div>
