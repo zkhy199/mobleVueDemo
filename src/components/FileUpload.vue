@@ -14,8 +14,16 @@
             <mu-data-table :columns="columns" :data="list">
             <template slot-scope="scope">
                 <td>{{scope.row.name}}</td>
-                <td class="is-left">{{scope.row.calories}}</td>
+                <td class="is-left">{{scope.row.explain}}</td>
                 <td class="is-left">{{scope.row.type}}</td>
+            </template>
+            </mu-data-table>
+        </mu-paper>
+        <mu-paper :z-depth="1">
+            <mu-data-table :columns="columns1" :data="list1">
+            <template slot-scope="scope">
+                <td>{{scope.row.name}}</td>
+                <td class="is-left">{{scope.row.explain}}</td>
             </template>
             </mu-data-table>
         </mu-paper>
@@ -56,59 +64,69 @@ export default {
 			},
 			columns: [
                 { title: '属性', width: 100, name: 'name' },
-                { title: '说明', name: 'calories', width: 150, align: 'center'},
+                { title: '说明', name: 'explain', width: 150, align: 'center'},
                 { title: '类型', name: 'type', width: 200, align: 'center'}
             ],
             list: [
                 {
                     name: 'action',
-                    calories: '*必填，上传图片的api地址',
+                    explain: '*必填，上传图片的api地址',
                     type: 'String'
                 },
                 {
                     name: 'disabled',
-                    calories: '是否禁用',
+                    explain: '是否禁用',
                     type: 'Boolean(default:false)'
                 },
                 {
                     name: 'autoUpload',
-                    calories: '是否自动上传',
+                    explain: '是否自动上传',
                     type: 'Boolean(default:true)'
                 },
                 {
                     name: 'multiple',
-                    calories: '是否支持一次多张图片',
+                    explain: '是否支持一次多张图片',
                     type: 'Boolean(default:false)'
                 },
                 {
                     name: 'beforeUpload',
-                    calories: '上传前钩子',
+                    explain: '上传前钩子',
                     type: 'Fuction'
                 },
                 {
                     name: 'maxSize',
-                    calories: '最大限制',
+                    explain: '最大限制',
                     type: 'Number(default:Number.MAX_VALUE)'
                 },
                 {
                     name: 'onSuccess',
-                    calories: '上传成功钩子',
+                    explain: '上传成功钩子',
                     type: 'Function(参数1:res，参数2：file)'
                 },
                 {
                     name: 'onProgress',
-                    calories: '进度钩子',
+                    explain: '进度钩子',
                     type: 'Function(参数1:e，参数2：file)'
                 },
                 {
                     name: 'onError',
-                    calories: '上传出错钩子',
+                    explain: '上传出错钩子',
                     type: 'Function(参数1:err，参数2：file)'
                 },
                 {
                     name: 'onRemove',
-                    calories: '删除钩子',
+                    explain: '删除钩子',
                     type: 'Function(参数1:file)'
+                }
+            ],
+			columns1: [
+                { title: '方法', width: 150, name: 'name' },
+                { title: '说明', name: 'explain', width: 200, align: 'center'}
+            ],
+            list1: [
+                {
+                    name: 'doSubmit',
+                    explain: '非自动上传时调用此方法进行图片上传'
                 }
             ]
 		}
