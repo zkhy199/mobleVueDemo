@@ -8,12 +8,12 @@
             <mu-grid-list class="gridlist-demo">
                 <mu-sub-header>12月</mu-sub-header>
                 <mu-grid-tile v-for="tile, index in list" :key="index">
-                <img :src="tile.image" >
-                <span slot="title">{{tile.title}}</span>
-                <span slot="subTitle">by <b>{{tile.author}}</b></span>
-                <mu-button slot="action" icon>
-                    <mu-icon value="star_border"></mu-icon>
-                </mu-button>
+                  <img :src="tile.image" >
+                  <span slot="title">{{tile.title}}</span>
+                  <span slot="subTitle">by <b>{{tile.author}}</b></span>
+                  <mu-button slot="action" icon>
+                      <mu-icon value="star_border"></mu-icon>
+                  </mu-button>
                 </mu-grid-tile>
             </mu-grid-list>
         </div>

@@ -24,6 +24,7 @@ import Stepper from '@/components/Stepper'
 import Tabs from '@/components/Tabs'
 import Pull from '@/components/Pull'
 import FileUpload from '@/components/FileUpload'
+import Grid from '@/components/Grid'
 import axiosM from '@/components/axiosM'
 
 Vue.use(Router)
@@ -154,6 +155,11 @@ export default new Router({
       path: '/axiosM',
       name: 'axiosM',
       component: axiosM
+    },
+    {
+      path: '/grid',
+      name: 'grid',
+      component: Grid
     }
   
   ]

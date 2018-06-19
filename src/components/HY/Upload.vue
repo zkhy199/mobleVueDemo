@@ -1,6 +1,5 @@
 <template>
   <div class="hy-upload">
-    <span class="upload-title">图片</span>
     <div class="upload-icon">
       <input
         ref="input"
@@ -9,6 +8,7 @@
         class="upload-input"
         :disabled="disabled"
         @change="onChange"
+        :multiple="multiple"
       >
     </div>
     <div class="pic-list" v-if="waitList.length > 0">
@@ -23,27 +23,66 @@
 <script>
 import api from '@/api/axiosApi'
 import ApiList from '@/api/apiList'
+import ajax from './ajax'
+function noop () {}
 
 export default {
   props: {
     disabled: Boolean,
-    beforeRead: Function,
-    beforeUpload: Function,
-    resultType: {
-      type: String,
-      default: 'dataUrl'
+    autoUpload: {
+      type: Boolean,
+      default: true
     },
+    multiple: {
+      type: Boolean,
+      default: true
+    },
+    beforeUpload: Function,
     maxSize: {
       type: Number,
       default: Number.MAX_VALUE
+    },
+    onSuccess: {
+      type: Function,
+      default: noop
+    },
+    onProgress: {
+      type: Function,
+      default: noop
+    },
+    onError: {
+      type: Function,
+      default: noop
+    },
+    // 删除文件
+    onRemove: {
+      type: Function,
+      default: noop
+    },
+    // 上传的api地址
+    action: {
+      type: String,
+      required: true
     }
   },
   data () {
     return {
-      waitList: []
+      waitList: [],
+      tempIndex: 1,
+      uploadFiles: [],
+      reqs: {},
+      fileList: []
     }
   },
   methods: {
+    doSubmit () {
+      const vm = this;
+      if (autoUpload) { return; }
+      this.fileList.forEach(rawFile => {
+        vm.handleStart(rawFile);
+        vm.upload(rawFile);
+      });
+    },
     onChange (event) {
       const vm = this
       let { files } = event.target
@@ -51,95 +90,88 @@ export default {
         return
       }
 
-      files = files.length === 1 ? files[0] : [].slice.call(files, 0)
-      if (!files || (vm.beforeRead && !vm.beforeRead(files))) {
-        return
+      files = Array.prototype.slice.call(files);
+      if (!vm.multiple) { files = files.slice(0, 1); }
+
+      if (files.length === 0) { return; }
+
+      this.fileList = files;
+      this.fileList.forEach(rawFile => {
+        vm.handleStart(rawFile);
+        if (vm.autoUpload) vm.upload(rawFile);
+      });
+    },
+    // 开始上传前的数据准备
+    handleStart(rawFile) {
+      rawFile.uid = Date.now() + this.tempIndex++;
+      let file = {
+        status: 'ready',
+        name: rawFile.name,
+        size: rawFile.size,
+        percentage: 0,
+        uid: rawFile.uid,
+        raw: rawFile
+      };
+
+      try {
+        file.url = URL.createObjectURL(rawFile);
+      } catch (err) {
+        console.error(err);
+        return;
       }
 
-      if (Array.isArray(files)) {
-        Promise.all(files.map(vm.readFile)).then(contents => {
-          let oversize = false
-          const payload = files.map((file, index) => {
-            if (file.size > vm.maxSize) {
-              oversize = true
-            }
+      this.uploadFiles.push(file);
+    },
+    // 上传前控制
+    upload(rawFile) {
+      if (rawFile.size > this.maxSize) {
+        this.onError('图片过大', rawFile);
+        return;
+      }
+      this.$refs.input.value = null;
 
-            return {
-              file: files[index],
-              content: contents[index]
-            }
-          })
+      if (!this.beforeUpload) {
+        return this.post(rawFile);
+      }
 
-          vm.onAfterRead(payload, oversize)
-        })
+      const before = this.beforeUpload(rawFile);
+      if (before !== false) {
+        this.post(rawFile);
       } else {
-        vm.readFile(files).then(content => {
-          vm.onAfterRead(
-            { file: files, content },
-            files.size > vm.maxSize
-          )
-        })
+        this.onRemove(rawFile);
       }
     },
-    readFile (file) {
+    // 正式上传
+    post(rawFile) {
       const vm = this
-      return new Promise(resolve => {
-        const reader = new FileReader()
-
-        reader.onload = event => {
-          resolve(event.target.result)
+      const { uid } = rawFile;
+      const option = {
+        headers: {},
+        // cookie凭证是否支持发送
+        withCredentials: true,
+        file: rawFile,
+        data: {},
+        filename: rawFile.name,
+        // 上传的地址
+        action: vm.action,
+        onProgress: e => {
+          vm.onProgress(e, rawFile);
+        },
+        onSuccess: res => {
+          vm.onSuccess(res, rawFile);
+          delete vm.reqs[uid];
+        },
+        onError (res) {
+          vm.onError(res, rawFile);
+          delete vm.reqs[uid];
         }
-
-        if (vm.resultType === 'dataUrl') {
-          reader.readAsDataURL(file)
-        } else if (vm.resultType === 'text') {
-          reader.readAsText(file)
-        }
-      })
-    },
-    onAfterRead (files, oversize) {
-      if (oversize) {
-        this.$emit('oversize', files)
-        return false
-      } else {
-        this.afterRead && this.afterRead(files)
-        this.$refs.input && (this.$refs.input.value = '')
+      };
+      // 调用后台接口
+      const req = ajax(option);
+      vm.reqs[uid] = req;
+      if (req && req.then) {
+        req.then(option.onSuccess, option.onError);
       }
-    },
-    afterRead (file) {
-      let doUpload = true
-      if (this.beforeUpload) {
-        // 此处返回false可以阻止上传
-        doUpload = this.beforeUpload()
-      }
-      if (doUpload !== false) {
-        // 开始向后台上传图片
-        this.handleFile(file)
-        this.waitList.push({ url: file.content })
-      }
-    },
-    handleFile (file) {
-      var base64String = file.content
-      // 这里对base64串进行操作，去掉url头，并转换为byte
-      var bytes = window.atob(base64String.split(',')[1])
-
-      var array = []
-      for (var i = 0; i < bytes.length; i++) {
-        array.push(bytes.charCodeAt(i))
-      }
-      var blob = new Blob([new Uint8Array(array)], {type: file.file.type})
-      var fd = new FormData()
-      fd.append('file', blob, file.file.name)
-      console.log(fd)
-      const onSuccess = (res) => {
-        console.log(res)
-      }
-      const onError = (err) => {
-        console.log(err)
-      }
-      api(ApiList.fileUpload, fd)
-      .then(onSuccess)
-      .catch(onError)
     }
   }
 }
@@ -150,11 +182,15 @@ export default {
   padding: 10px;
   text-align: left;
 }
+.hy-upload::after{
+  content: '';
+  display: block;
+  clear: both;
+}
 .upload-icon{
   width: 20px;
   height: 20px;
   overflow: hidden;
-  float: right;
   border: 1px solid rgba(100,100,100,0.5);
   position: relative;
 }
